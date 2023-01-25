@@ -116,10 +116,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             else:
                 self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
             self.request.sendall(bytearray(file_data, 'utf-8'))
-        except FileNotFoundError:
-            self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
-            self.request.sendall(b"<html><body><h1>404 Not Found</h1></body></html>")
-            return
+
 
 
 if __name__ == "__main__":
