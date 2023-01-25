@@ -2,6 +2,8 @@
 import socketserver
 import os
 from urllib.parse import urlparse
+
+
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,8 +66,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             pass
         try:
             temp = path.split(".")
-            # print(temp)
-            # print(path[-1])
+            print(temp)
+            print(path[-1])
             if len(temp) == 1:
                 if path[-1] == '/':
                     pass
@@ -74,7 +76,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
                         self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n\n")
                         self.request.sendall(b"<html><body><h1>301 Moved Permanently</h1></body></html>")
                         return
-                    elif len(path) > 5:
+                    elif len(path) == 10:
                         self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
                         self.request.sendall(b"<html><body><h1>404 Not Found</h1></body></html>")
                         return
@@ -112,7 +114,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             elif path.endswith('.css'):
                 self.request.sendall(b"HTTP/1.1 200 OK\nContent-Type: text/css\n\n")
             else:
-                self.request.sendall(b"HTTP/1.1 200 OK\n\n")
+                self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
             self.request.sendall(bytearray(file_data, 'utf-8'))
         except FileNotFoundError:
             self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
