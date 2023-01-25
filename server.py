@@ -66,8 +66,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
             pass
         try:
             temp = path.split(".")
-            print(temp)
-            print(path[-1])
+            #print(temp)
+            #print(path[-1])
             if len(temp) == 1:
                 if path[-1] == '/':
                     pass
