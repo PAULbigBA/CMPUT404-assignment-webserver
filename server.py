@@ -1,5 +1,8 @@
-#  coding: utf-8 
+#  coding: utf-8
+
 import socketserver
+import os
+
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -26,13 +29,74 @@ import socketserver
 
 # try: curl -v -X GET http://127.0.0.1:8080/
 
-
 class MyWebServer(socketserver.BaseRequestHandler):
-    
+
     def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        self.data = self.request.recv(1024).strip().decode('utf-8')
+        # print("Got a request of:\n%s\n" % self.data)
+        # self.request.sendall(bytearray("OK", 'utf-8'))
+
+        request = self.data.split('\r\n')[0]
+        # print('this is request: ' + request)
+
+        method, path, HTTP = request.split()
+        # print('this is method: ' + method)
+        # print('this is path: ' + path)
+        # print('this is HTTP: ' + HTTP)
+        folder_name = 'www'
+        if not os.path.isdir(folder_name):
+            self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
+            self.request.sendall(b"<html><body><h1>404 Not Found</h1></body></html>")
+            return
+        try:
+            if method != 'GET':
+                self.request.sendall(b"HTTP/1.1 405 Method Not Allowed\n\n")
+                self.request.sendall(b"<html><body><h1>405 Method Not Allowed</h1></body></html>")
+                return
+        except ValueError:
+            pass
+        try:
+            temp = path.split(".")
+            if len(temp) == 1:
+                if path[-1] != '/':
+                    self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n\n")
+                    self.request.sendall(b"<html><body><h1>301 Moved Permanently</h1></body></html>")
+                    return
+            else:
+                if '/' in temp[-1]:
+                    self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n\n")
+                    self.request.sendall(b"<html><body><h1>301 Moved Permanently</h1></body></html>")
+                    return
+            if not path.startswith('/'):
+                self.request.sendall(b"HTTP/1.1 403 Forbidden error\n\n")
+                self.request.sendall(b"<html><body><h1>403 Forbidden error</h1></body></html>")
+                return
+        except ValueError:
+            pass
+        try:
+            if HTTP != 'HTTP/1.1':
+                self.request.sendall(b"HTTP/1.1 400 Bad Request\n\n")
+                self.request.sendall(b"<html><body><h1>400 Bad Request</h1></body></html>")
+                return
+        except ValueError:
+            pass
+
+        if path[-1] == '/':
+            path = path + 'index.html'
+        try:
+            file = open('./www' + path)
+            file_data = file.read()
+            if path.endswith('.html'):
+                self.request.sendall(b"HTTP/1.1 200 OK\nContent-Type: text/html\n\n")
+            elif path.endswith('.css'):
+                self.request.sendall(b"HTTP/1.1 200 OK\nContent-Type: text/css\n\n")
+            else:
+                self.request.sendall(b"HTTP/1.1 200 OK\n\n")
+            self.request.sendall(bytearray(file_data, 'utf-8'))
+        except ValueError:
+            self.request.sendall(b"Error reading file.")
+            return
+
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
