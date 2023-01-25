@@ -1,9 +1,7 @@
 #  coding: utf-8
-
 import socketserver
 import os
-
-
+from urllib.parse import urlparse
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,11 +33,18 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip().decode('utf-8')
         # print("Got a request of:\n%s\n" % self.data)
         # self.request.sendall(bytearray("OK", 'utf-8'))
-
-        request = self.data.split('\r\n')[0]
-        # print('this is request: ' + request)
-
-        method, path, HTTP = request.split()
+        try:
+            # parsed_url = urlparse(self.data)
+            # print("this is :" + parsed_url.path[0:3])
+            request = self.data.split('\r\n')[0]
+            # print('this is request: ' + request)
+            method = request.split()[0]
+            path = request.split()[1]
+            HTTP = request.split()[2]
+        except ValueError:
+            pass
+        except IndexError:
+            pass
         # print('this is method: ' + method)
         # print('this is path: ' + path)
         # print('this is HTTP: ' + HTTP)
@@ -55,23 +60,38 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 return
         except ValueError:
             pass
+        except UnboundLocalError:
+            pass
         try:
             temp = path.split(".")
+            # print(temp)
+            # print(path[-1])
             if len(temp) == 1:
-                if path[-1] != '/':
-                    self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n\n")
-                    self.request.sendall(b"<html><body><h1>301 Moved Permanently</h1></body></html>")
+                if path[-1] == '/':
+                    pass
+                if path[-1] == 'p':
+                    if len(path) == 5:
+                        self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n\n")
+                        self.request.sendall(b"<html><body><h1>301 Moved Permanently</h1></body></html>")
+                        return
+                    elif len(path) > 5:
+                        self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
+                        self.request.sendall(b"<html><body><h1>404 Not Found</h1></body></html>")
+                        return
+                # if path[-1] != '/':
+                #     self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
+                #     self.request.sendall(b"<html><body><h1>404 Not Found</h1></body></html>")
+                #     return
+            elif len(temp) != 1:
+                if path[-1] == '/':
+                    self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
+                    self.request.sendall(b"<html><body><h1>404 Not Found</h1></body></html>")
                     return
-            else:
-                if '/' in temp[-1]:
-                    self.request.sendall(b"HTTP/1.1 301 Moved Permanently\n\n")
-                    self.request.sendall(b"<html><body><h1>301 Moved Permanently</h1></body></html>")
-                    return
-            if not path.startswith('/'):
-                self.request.sendall(b"HTTP/1.1 403 Forbidden error\n\n")
-                self.request.sendall(b"<html><body><h1>403 Forbidden error</h1></body></html>")
-                return
         except ValueError:
+            pass
+        except IndexError:
+            pass
+        except UnboundLocalError:
             pass
         try:
             if HTTP != 'HTTP/1.1':
@@ -80,7 +100,8 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 return
         except ValueError:
             pass
-
+        except UnboundLocalError:
+            pass
         if path[-1] == '/':
             path = path + 'index.html'
         try:
@@ -93,8 +114,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
             else:
                 self.request.sendall(b"HTTP/1.1 200 OK\n\n")
             self.request.sendall(bytearray(file_data, 'utf-8'))
-        except ValueError:
-            self.request.sendall(b"Error reading file.")
+        except FileNotFoundError:
+            self.request.sendall(b"HTTP/1.1 404 Not Found\n\n")
+            self.request.sendall(b"<html><body><h1>404 Not Found</h1></body></html>")
             return
 
 
